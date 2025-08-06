@@ -4,65 +4,299 @@ import os
 import threading
 from PIL import Image, ImageTk
 import subprocess
+import shutil
+from pathlib import Path
+
+# Constants
+DEFAULT_WINDOW_SIZE = "850x950"
+DEFAULT_DURATION_HOURS = 4.0
+DEFAULT_CROSSFADE_DURATION = 3000
+DEFAULT_ASPECT_RATIO = "16:9"
+
+# Video quality settings
+VIDEO_QUALITY = {
+    "16:9": (1280, 720),
+    "4:3": (960, 720),
+    "1:1": (720, 720),
+    "21:9": (1680, 720)
+}
+
+# Font settings
+FONTS = {
+    "title": ("Arial", 24, "bold"),
+    "subtitle": ("Arial", 14),
+    "label": ("Arial", 12),
+    "entry": ("Arial", 11),
+    "info": ("Arial", 11),
+    "status": ("Arial", 12),
+    "button": ("Arial", 11),
+    "small": ("Arial", 10),
+    "combo": ("Arial", 11)
+}
+
+class UIConfig:
+    """คลาสสำหรับเก็บการตั้งค่า UI"""
+    
+    @staticmethod
+    def setup_styles(style):
+        """ตั้งค่า TTK styles"""
+        style.configure("Custom.TButton", font=FONTS["label"])
+        style.configure("Custom.TEntry", font=FONTS["entry"])
+        style.configure("Custom.TLabel", font=FONTS["label"])
+        style.configure("Custom.TCombobox", font=FONTS["label"])
+    
+    @staticmethod
+    def get_file_filters():
+        """ส่งคืน file filters สำหรับ dialogs"""
+        return {
+            'image': [
+                ("ไฟล์ภาพ", "*.jpg *.jpeg *.png *.bmp"),
+                ("JPEG", "*.jpg *.jpeg"),
+                ("PNG", "*.png"),
+                ("Bitmap", "*.bmp"),
+                ("ทั้งหมด", "*.*")
+            ],
+            'audio': [
+                ("ไฟล์เสียง", "*.mp3 *.wav *.m4a *.flac"),
+                ("MP3", "*.mp3"),
+                ("WAV", "*.wav"),
+                ("M4A", "*.m4a"),
+                ("FLAC", "*.flac"),
+                ("ทั้งหมด", "*.*")
+            ]
+        }
+
+
+class VideoProcessor:
+    """คลาสสำหรับประมวลผลวิดีโอ"""
+    
+    def __init__(self, progress_callback=None):
+        self.progress_callback = progress_callback
+    
+    def create_video(self, image_path, audio_path, output_path, duration_seconds, aspect_ratio):
+        """สร้างวิดีโอด้วยวิธีที่เหมาะสม"""
+        try:
+            return self._create_video_with_moviepy(image_path, audio_path, output_path, duration_seconds, aspect_ratio)
+        except ImportError:
+            return self._create_video_with_ffmpeg(image_path, audio_path, output_path, duration_seconds, aspect_ratio)
+        except Exception as e:
+            print(f"Error with MoviePy, trying FFmpeg: {e}")
+            return self._create_video_with_ffmpeg(image_path, audio_path, output_path, duration_seconds, aspect_ratio)
+    
+    def _create_video_with_moviepy(self, image_path, audio_path, output_path, duration_seconds, aspect_ratio):
+        """สร้างวิดีโอด้วย MoviePy"""
+        from moviepy.editor import ImageClip, AudioFileClip, concatenate_audioclips
+        
+        if self.progress_callback:
+            self.progress_callback(45, "กำลังใช้ MoviePy สร้างวิดีโอ...")
+        
+        # โหลดไฟล์เสียง
+        audio = AudioFileClip(audio_path)
+        
+        # คำนวณจำนวนรอบที่ต้องลูป
+        audio_duration = audio.duration
+        loops_needed = int(duration_seconds / audio_duration) + 1
+        
+        # สร้างเสียงลูป
+        audio_loops = [audio for _ in range(loops_needed)]
+        final_audio = concatenate_audioclips(audio_loops).subclip(0, duration_seconds)
+        
+        # สร้างวิดีโอจากภาพ
+        image_clip = ImageClip(image_path, duration=duration_seconds)
+        image_clip = self._resize_image_clip_moviepy(image_clip, aspect_ratio)
+        
+        # รวมภาพและเสียง
+        video = image_clip.set_audio(final_audio)
+        video.write_videofile(output_path, fps=1, codec='libx264', audio_codec='aac', verbose=False, logger=None)
+        
+        # ปิดไฟล์
+        audio.close()
+        video.close()
+        
+        return True
+    
+    def _create_video_with_ffmpeg(self, image_path, audio_path, output_path, duration_seconds, aspect_ratio):
+        """สร้างวิดีโอด้วย FFmpeg"""
+        if self.progress_callback:
+            self.progress_callback(45, "กำลังใช้ FFmpeg สร้างวิดีโอ...")
+        
+        try:
+            resized_image = self._resize_image_for_ffmpeg(image_path, aspect_ratio)
+            
+            ffmpeg_cmd = [
+                'ffmpeg', '-y', '-loop', '1',
+                '-i', resized_image, '-i', audio_path,
+                '-c:v', 'libx264', '-c:a', 'aac',
+                '-t', str(duration_seconds), '-pix_fmt', 'yuv420p',
+                '-r', '1', output_path
+            ]
+            
+            result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                if resized_image != image_path:
+                    os.remove(resized_image)
+                return True
+            else:
+                print(f"FFmpeg error: {result.stderr}")
+                return False
+                
+        except FileNotFoundError:
+            return self._create_fallback_instructions(output_path, image_path, audio_path, duration_seconds, aspect_ratio)
+        except Exception as e:
+            print(f"Error with FFmpeg: {e}")
+            return self._create_fallback_instructions(output_path, image_path, audio_path, duration_seconds, aspect_ratio)
+    
+    def _resize_image_clip_moviepy(self, clip, aspect_ratio):
+        """ปรับขนาดภาพสำหรับ MoviePy"""
+        width, height = VIDEO_QUALITY.get(aspect_ratio, VIDEO_QUALITY["16:9"])
+        return clip.resize(height=height).crop(width=width, height=height, x_center=clip.w/2, y_center=clip.h/2)
+    
+    def _resize_image_for_ffmpeg(self, image_path, aspect_ratio):
+        """ปรับขนาดภาพสำหรับ FFmpeg"""
+        img = Image.open(image_path)
+        target_size = VIDEO_QUALITY.get(aspect_ratio, VIDEO_QUALITY["16:9"])
+        img_resized = self._crop_and_resize_image(img, target_size)
+        
+        temp_image_path = image_path.replace('.jpg', '_resized.jpg').replace('.png', '_resized.jpg')
+        img_resized.save(temp_image_path, 'JPEG')
+        return temp_image_path
+    
+    def _crop_and_resize_image(self, img, target_size):
+        """Crop และ resize ภาพ"""
+        target_width, target_height = target_size
+        img_width, img_height = img.size
+        
+        target_ratio = target_width / target_height
+        img_ratio = img_width / img_height
+        
+        if img_ratio > target_ratio:
+            new_width = int(img_height * target_ratio)
+            left = (img_width - new_width) // 2
+            img = img.crop((left, 0, left + new_width, img_height))
+        else:
+            new_height = int(img_width / target_ratio)
+            top = (img_height - new_height) // 2
+            img = img.crop((0, top, img_width, top + new_height))
+        
+        return img.resize(target_size, Image.Resampling.LANCZOS)
+    
+    def _create_fallback_instructions(self, output_path, image_path, audio_path, duration_seconds, aspect_ratio):
+        """สร้างไฟล์คำแนะนำ"""
+        instructions_file = output_path.replace('.mp4', '_instructions.txt')
+        duration_hours = duration_seconds / 3600
+        
+        instructions = f"""🎬 วิธีสร้างวิดีโอด้วยตัวเอง
+
+เนื่องจากไม่สามารถสร้างวิดีโออัตโนมัติได้ กรุณาทำตามขั้นตอนต่อไปนี้:
+
+📁 ไฟล์ที่ต้องใช้:
+• ภาพ: {image_path}
+• เสียง: {audio_path}
+• ความยาววิดีโอ: {duration_hours:.1f} ชั่วโมง
+• อัตราส่วน: {aspect_ratio}
+
+🛠️ วิธีที่ 1: ใช้ FFmpeg (แนะนำ)
+1. ดาวน์โหลด FFmpeg จาก https://ffmpeg.org/download.html
+2. เปิด Command Prompt
+3. รันคำสั่ง:
+   ffmpeg -loop 1 -i "{image_path}" -i "{audio_path}" -c:v libx264 -c:a aac -t {duration_seconds} -pix_fmt yuv420p -r 1 "{output_path}"
+
+🎥 วิธีที่ 2: ใช้โปรแกรม Video Editor
+• DaVinci Resolve (ฟรี)
+• OpenShot (ฟรี)
+• Adobe Premiere Pro
+• Canva (ออนไลน์)
+
+📋 ขั้นตอน:
+1. นำเข้าภาพและเสียง
+2. ตั้งความยาวภาพเป็น {duration_hours:.1f} ชั่วโมง
+3. วางเสียงซ้ำจนครบเวลา
+4. Export เป็น MP4
+"""
+        
+        try:
+            with open(instructions_file, 'w', encoding='utf-8') as f:
+                f.write(instructions)
+            
+            if self.progress_callback:
+                self.progress_callback(100, f"สร้างไฟล์คำแนะนำ: {os.path.basename(instructions_file)}")
+            
+            return True
+        except Exception as e:
+            print(f"Error creating instructions: {e}")
+            return False
+
 
 class ImageMusicLooperUI:
     def __init__(self, root):
         self.root = root
         self.root.title("🎵 Image Music Looper - สร้างวิดีโอเพลงแบบลูป")
-        self.root.geometry("800x900")
+        self.root.geometry(DEFAULT_WINDOW_SIZE)
         self.root.configure(bg="#f0f0f0")
         
-        # ตัวแปรสำหรับเก็บข้อมูล
-        self.image_path = tk.StringVar()
-        self.audio_path = tk.StringVar()
-        self.output_path = tk.StringVar(value=os.getcwd())
-        self.duration_hours = tk.DoubleVar(value=4.0)
-        self.crossfade_duration = tk.IntVar(value=3000)
-        self.auto_crossfade = tk.BooleanVar(value=True)
-        self.aspect_ratio = tk.StringVar(value="16:9")
-        self.keep_original = tk.BooleanVar(value=False)
+        # Initialize variables
+        self._init_variables()
         
-        # สร้าง UI
+        # Setup UI styles
+        self.style = ttk.Style()
+        UIConfig.setup_styles(self.style)
+        
+        # Create UI
         self.create_ui()
         
-        # ตัวแปรสำหรับ preview
+        # Preview variables
         self.image_preview = None
         self.cropped_preview = None
         
+    def _init_variables(self):
+        """Initialize all tkinter variables"""
+        self.image_path = tk.StringVar()
+        self.audio_path = tk.StringVar()
+        self.output_path = tk.StringVar(value=os.getcwd())
+        self.duration_hours = tk.DoubleVar(value=DEFAULT_DURATION_HOURS)
+        self.crossfade_duration = tk.IntVar(value=DEFAULT_CROSSFADE_DURATION)
+        self.auto_crossfade = tk.BooleanVar(value=True)
+        self.aspect_ratio = tk.StringVar(value=DEFAULT_ASPECT_RATIO)
+        self.keep_original = tk.BooleanVar(value=False)
+        
     def create_ui(self):
         """สร้าง UI ทั้งหมด"""
-        # หัวข้อหลัก
-        title_frame = tk.Frame(self.root, bg="#2c3e50", height=80)
-        title_frame.pack(fill="x", padx=10, pady=10)
-        title_frame.pack_propagate(False)
-        
-        title_label = tk.Label(title_frame, 
-                              text="🎵 Image Music Looper",
-                              font=("Arial", 20, "bold"),
-                              fg="white", bg="#2c3e50")
-        title_label.pack(expand=True)
-        
-        subtitle_label = tk.Label(title_frame,
-                                 text="สร้างวิดีโอเพลงแบบลูปอย่างง่าย",
-                                 font=("Arial", 12),
-                                 fg="#ecf0f1", bg="#2c3e50")
-        subtitle_label.pack()
+        self._create_header()
         
         # สร้าง Notebook สำหรับแท็บต่างๆ
         notebook = ttk.Notebook(self.root)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
         
-        # แท็บที่ 1: การตั้งค่าไฟล์
+        # สร้างแท็บต่างๆ
         self.create_file_tab(notebook)
-        
-        # แท็บที่ 2: การตั้งค่าขั้นสูง
         self.create_advanced_tab(notebook)
-        
-        # แท็บที่ 3: ดูผลลัพธ์
         self.create_preview_tab(notebook)
         
         # ปุ่มสำหรับการดำเนินการ
         self.create_action_buttons()
+    
+    def _create_header(self):
+        """สร้างส่วนหัว"""
+        title_frame = tk.Frame(self.root, bg="#2c3e50", height=80)
+        title_frame.pack(fill="x", padx=10, pady=10)
+        title_frame.pack_propagate(False)
+        
+        title_label = tk.Label(
+            title_frame, 
+            text="🎵 Image Music Looper",
+            font=FONTS["title"],
+            fg="white", bg="#2c3e50"
+        )
+        title_label.pack(expand=True)
+        
+        subtitle_label = tk.Label(
+            title_frame,
+            text="สร้างวิดีโอเพลงแบบลูปอย่างง่าย",
+            font=FONTS["subtitle"],
+            fg="#ecf0f1", bg="#2c3e50"
+        )
+        subtitle_label.pack()
         
     def create_file_tab(self, notebook):
         """สร้างแท็บสำหรับเลือกไฟล์"""
@@ -73,34 +307,34 @@ class ImageMusicLooperUI:
         image_section = ttk.LabelFrame(file_frame, text="🖼️ เลือกภาพพื้นหลัง", padding=15)
         image_section.pack(fill="x", padx=20, pady=10)
         
-        ttk.Label(image_section, text="ไฟล์ภาพ:").pack(anchor="w")
+        ttk.Label(image_section, text="ไฟล์ภาพ:", font=FONTS["label"]).pack(anchor="w")
         image_frame = tk.Frame(image_section)
         image_frame.pack(fill="x", pady=5)
         
-        ttk.Entry(image_frame, textvariable=self.image_path, width=60).pack(side="left", fill="x", expand=True)
-        ttk.Button(image_frame, text="เลือก", command=self.select_image).pack(side="right", padx=(5,0))
+        ttk.Entry(image_frame, textvariable=self.image_path, width=60, font=FONTS["entry"]).pack(side="left", fill="x", expand=True)
+        ttk.Button(image_frame, text="เลือก", command=self.select_image, style="Custom.TButton").pack(side="right", padx=(5,0))
         
         # ส่วนเลือกเสียง
         audio_section = ttk.LabelFrame(file_frame, text="🎵 เลือกไฟล์เสียง", padding=15)
         audio_section.pack(fill="x", padx=20, pady=10)
         
-        ttk.Label(audio_section, text="ไฟล์เสียง:").pack(anchor="w")
+        ttk.Label(audio_section, text="ไฟล์เสียง:", font=FONTS["label"]).pack(anchor="w")
         audio_frame = tk.Frame(audio_section)
         audio_frame.pack(fill="x", pady=5)
         
-        ttk.Entry(audio_frame, textvariable=self.audio_path, width=60).pack(side="left", fill="x", expand=True)
-        ttk.Button(audio_frame, text="เลือก", command=self.select_audio).pack(side="right", padx=(5,0))
+        ttk.Entry(audio_frame, textvariable=self.audio_path, width=60, font=FONTS["entry"]).pack(side="left", fill="x", expand=True)
+        ttk.Button(audio_frame, text="เลือก", command=self.select_audio, style="Custom.TButton").pack(side="right", padx=(5,0))
         
         # ส่วนเลือกโฟลเดอร์ผลลัพธ์
         output_section = ttk.LabelFrame(file_frame, text="📁 โฟลเดอร์ผลลัพธ์", padding=15)
         output_section.pack(fill="x", padx=20, pady=10)
         
-        ttk.Label(output_section, text="โฟลเดอร์ที่จะบันทึก:").pack(anchor="w")
+        ttk.Label(output_section, text="โฟลเดอร์ที่จะบันทึก:", font=FONTS["label"]).pack(anchor="w")
         output_frame = tk.Frame(output_section)
         output_frame.pack(fill="x", pady=5)
         
-        ttk.Entry(output_frame, textvariable=self.output_path, width=60).pack(side="left", fill="x", expand=True)
-        ttk.Button(output_frame, text="เลือก", command=self.select_output).pack(side="right", padx=(5,0))
+        ttk.Entry(output_frame, textvariable=self.output_path, width=60, font=FONTS["entry"]).pack(side="left", fill="x", expand=True)
+        ttk.Button(output_frame, text="เลือก", command=self.select_output, style="Custom.TButton").pack(side="right", padx=(5,0))
         
         # ส่วนตั้งค่าเวลา
         time_section = ttk.LabelFrame(file_frame, text="⏰ ความยาววิดีโอ", padding=15)
@@ -109,15 +343,15 @@ class ImageMusicLooperUI:
         time_frame = tk.Frame(time_section)
         time_frame.pack(fill="x")
         
-        ttk.Label(time_frame, text="ความยาว (ชั่วโมง):").pack(side="left")
+        ttk.Label(time_frame, text="ความยาว (ชั่วโมง):", font=FONTS["label"]).pack(side="left")
         ttk.Scale(time_frame, from_=0.5, to=12.0, variable=self.duration_hours, 
                  orient="horizontal", length=200).pack(side="left", padx=10)
-        duration_label = ttk.Label(time_frame, text="4.0 ชั่วโมง")
+        duration_label = ttk.Label(time_frame, text="4.0 ชั่วโมง", font=FONTS["label"])
         duration_label.pack(side="left")
         
         # อัปเดตข้อความเมื่อเลื่อน scale
         def update_duration_label(*args):
-            duration_label.config(text=f"{self.duration_hours.get():.1f} ชั่วโมง")
+            duration_label.config(text=f"{self.duration_hours.get():.1f} ชั่วโมง", font=FONTS["label"])
         self.duration_hours.trace('w', update_duration_label)
         
     def create_advanced_tab(self, notebook):
@@ -132,9 +366,10 @@ class ImageMusicLooperUI:
         ratio_frame = tk.Frame(ratio_section)
         ratio_frame.pack(fill="x")
         
-        ttk.Label(ratio_frame, text="เลือกอัตราส่วน:").pack(side="left")
+        ttk.Label(ratio_frame, text="เลือกอัตราส่วน:", font=FONTS["label"]).pack(side="left")
         ratio_combo = ttk.Combobox(ratio_frame, textvariable=self.aspect_ratio, 
-                                  values=["16:9", "4:3", "1:1", "21:9"], state="readonly", width=10)
+                                  values=["16:9", "4:3", "1:1", "21:9"], state="readonly", width=10,
+                                  font=FONTS["combo"])
         ratio_combo.pack(side="left", padx=10)
         ratio_combo.current(0)
         
@@ -156,9 +391,10 @@ class ImageMusicLooperUI:
                        variable=self.auto_crossfade, value=False).pack(side="left")
         
         crossfade_spinbox = ttk.Spinbox(manual_frame, from_=500, to=10000, increment=500,
-                                       textvariable=self.crossfade_duration, width=10)
+                                       textvariable=self.crossfade_duration, width=10,
+                                       font=FONTS["entry"])
         crossfade_spinbox.pack(side="left", padx=10)
-        ttk.Label(manual_frame, text="มิลลิวินาที").pack(side="left")
+        ttk.Label(manual_frame, text="มิลลิวินาที", font=FONTS["label"]).pack(side="left")
         
         # อธิบาย Crossfade
         info_frame = tk.Frame(crossfade_section)
@@ -169,7 +405,7 @@ class ImageMusicLooperUI:
 • ระบบอัตโนมัติจะวิเคราะห์เสียงเพื่อหาจุดที่เหมาะสมที่สุด
 • การกำหนดเองเหมาะสำหรับเสียงที่มีรูปแบบเฉพาะ"""
         
-        ttk.Label(info_frame, text=info_text, foreground="gray").pack(anchor="w")
+        ttk.Label(info_frame, text=info_text, foreground="gray", font=FONTS["small"]).pack(anchor="w")
         
         # ส่วนตัวเลือกอื่นๆ
         other_section = ttk.LabelFrame(advanced_frame, text="🔧 ตัวเลือกอื่นๆ", padding=15)
@@ -202,7 +438,7 @@ class ImageMusicLooperUI:
         preview_btn_frame.pack(fill="x", padx=20, pady=10)
         
         ttk.Button(preview_btn_frame, text="🔄 อัปเดตตัวอย่าง", 
-                  command=self.update_preview).pack()
+                  command=self.update_preview, style="Custom.TButton").pack()
         
     def create_action_buttons(self):
         """สร้างปุ่มสำหรับการดำเนินการ"""
@@ -216,8 +452,13 @@ class ImageMusicLooperUI:
         self.progress_bar.pack(pady=10)
         
         # Status label
-        self.status_label = tk.Label(action_frame, text="พร้อมใช้งาน", 
-                                    font=("Arial", 10), fg="green", bg="#f0f0f0")
+        self.status_label = tk.Label(
+            action_frame, 
+            text="พร้อมใช้งาน", 
+            font=FONTS["status"], 
+            fg="green", 
+            bg="#f0f0f0"
+        )
         self.status_label.pack(pady=5)
         
         # ปุ่มต่างๆ
@@ -225,44 +466,27 @@ class ImageMusicLooperUI:
         button_frame.pack()
         
         ttk.Button(button_frame, text="🔍 ตรวจสอบการตั้งค่า", 
-                  command=self.validate_settings).pack(side="left", padx=5)
+                  command=self.validate_settings, style="Custom.TButton").pack(side="left", padx=5)
         
         self.start_button = ttk.Button(button_frame, text="🚀 เริ่มสร้างวิดีโอ", 
-                                      command=self.start_processing)
+                                      command=self.start_processing, style="Custom.TButton")
         self.start_button.pack(side="left", padx=5)
         
         ttk.Button(button_frame, text="📁 เปิดโฟลเดอร์ผลลัพธ์", 
-                  command=self.open_output_folder).pack(side="left", padx=5)
+                  command=self.open_output_folder, style="Custom.TButton").pack(side="left", padx=5)
         
     def select_image(self):
         """เลือกไฟล์ภาพ"""
-        file_path = filedialog.askopenfilename(
-            title="เลือกไฟล์ภาพ",
-            filetypes=[
-                ("ไฟล์ภาพ", "*.jpg *.jpeg *.png *.bmp"),
-                ("JPEG", "*.jpg *.jpeg"),
-                ("PNG", "*.png"),
-                ("Bitmap", "*.bmp"),
-                ("ทั้งหมด", "*.*")
-            ]
-        )
+        filters = UIConfig.get_file_filters()['image']
+        file_path = filedialog.askopenfilename(title="เลือกไฟล์ภาพ", filetypes=filters)
         if file_path:
             self.image_path.set(file_path)
             self.update_status(f"เลือกภาพ: {os.path.basename(file_path)}")
             
     def select_audio(self):
         """เลือกไฟล์เสียง"""
-        file_path = filedialog.askopenfilename(
-            title="เลือกไฟล์เสียง",
-            filetypes=[
-                ("ไฟล์เสียง", "*.mp3 *.wav *.m4a *.flac"),
-                ("MP3", "*.mp3"),
-                ("WAV", "*.wav"),
-                ("M4A", "*.m4a"),
-                ("FLAC", "*.flac"),
-                ("ทั้งหมด", "*.*")
-            ]
-        )
+        filters = UIConfig.get_file_filters()['audio']
+        file_path = filedialog.askopenfilename(title="เลือกไฟล์เสียง", filetypes=filters)
         if file_path:
             self.audio_path.set(file_path)
             self.update_status(f"เลือกเสียง: {os.path.basename(file_path)}")
@@ -423,12 +647,49 @@ class ImageMusicLooperUI:
                                    f"สร้างวิดีโอเสร็จสิ้น!\n"
                                    f"ไฟล์บันทึกที่: {looper.output_video}")
             else:
-                self.update_status("เกิดข้อผิดพลาด ❌")
-                messagebox.showerror("ข้อผิดพลาด", "ไม่สามารถสร้างวิดีโอได้")
+                self.update_status("ไม่สามารถสร้างวิดีโอได้ ❌")
+                
+                # ตรวจสอบว่าได้สร้างไฟล์คำแนะนำหรือไม่
+                instructions_file = looper.output_video.replace('.mp4', '_instructions.txt')
+                if os.path.exists(instructions_file):
+                    message = f"""ไม่สามารถสร้างวิดีโออัตโนมัติได้ 
+แต่ได้สร้างไฟล์คำแนะนำแล้ว:
+
+📄 {os.path.basename(instructions_file)}
+
+กรุณาเปิดไฟล์นี้เพื่อดูวิธีสร้างวิดีโอด้วยตัวเอง
+
+💡 วิธีแก้ปัญหา:
+1. ติดตั้ง FFmpeg จาก https://ffmpeg.org
+2. หรือใช้โปรแกรม Video Editor อื่น
+3. หรือรันโปรแกรมจากไฟล์ Python แทน .exe"""
+                    
+                    messagebox.showwarning("ไม่สามารถสร้างวิดีโอได้", message)
+                else:
+                    messagebox.showerror("ข้อผิดพลาด", 
+                                       "ไม่สามารถสร้างวิดีโอได้\n\n"
+                                       "💡 แนะนำ: รันโปรแกรมจากไฟล์ Python แทน .exe\n"
+                                       "หรือติดตั้ง FFmpeg ในระบบ")
                 
         except Exception as e:
             self.update_status(f"ข้อผิดพลาด: {str(e)} ❌")
-            messagebox.showerror("ข้อผิดพลาด", f"เกิดข้อผิดพลาด: {str(e)}")
+            
+            # แสดงข้อความข้อผิดพลาดที่มีประโยชน์
+            error_msg = str(e)
+            if "moviepy" in error_msg.lower() or "no module named" in error_msg.lower():
+                messagebox.showerror("ขาดไลบรารี่", 
+                                   f"ข้อผิดพลาด: {error_msg}\n\n"
+                                   "💡 วิธีแก้ไข:\n"
+                                   "1. รันคำสั่ง: pip install moviepy\n"
+                                   "2. หรือติดตั้ง FFmpeg จาก https://ffmpeg.org\n"
+                                   "3. หรือใช้โปรแกรม Video Editor อื่น\n\n"
+                                   "🚀 หรือ Build ใหม่ด้วย: python build.py")
+            else:
+                messagebox.showerror("ข้อผิดพลาด", f"เกิดข้อผิดพลาด: {str(e)}\n\n"
+                                   "💡 ลองตรวจสอบ:\n"
+                                   "• ไฟล์ภาพและเสียงถูกต้องหรือไม่\n"
+                                   "• มีพื้นที่ในการบันทึกเพียงพอหรือไม่\n"
+                                   "• ไฟล์ไม่ถูกใช้งานโดยโปรแกรมอื่นหรือไม่")
             
         finally:
             # เปิดการใช้งานปุ่มใหม่
@@ -472,6 +733,9 @@ class CustomImageMusicLooper:
         self.keep_original = keep_original
         self.progress_callback = progress_callback
         
+        # สร้าง processor
+        self.video_processor = VideoProcessor(progress_callback)
+        
         # ชื่อไฟล์ผลลัพธ์
         base_name = os.path.splitext(os.path.basename(audio_file))[0]
         self.output_video = os.path.join(output_folder, f"{base_name}_music_loop.mp4")
@@ -479,49 +743,29 @@ class CustomImageMusicLooper:
     def process(self):
         """ประมวลผลหลัก"""
         try:
-            # ใช้ LullaboyLooper จาก app.py แต่ปรับแต่งการทำงาน
             if self.progress_callback:
                 self.progress_callback(20, "กำลังโหลดไฟล์เสียง...")
                 
-            # สร้าง looper โดยใช้โฟลเดอร์ชั่วคราว
-            temp_folder = os.path.join(self.output_folder, "temp")
-            os.makedirs(temp_folder, exist_ok=True)
+            # สร้างโฟลเดอร์ชั่วคราว
+            temp_folder = self._create_temp_folder()
             
-            # คัดลอกไฟล์ไปยังโฟลเดอร์ชั่วคราว
-            import shutil
-            base_name = os.path.splitext(os.path.basename(self.audio_file))[0]
-            temp_audio = os.path.join(temp_folder, f"{base_name}.mp3")
-            temp_image = os.path.join(temp_folder, f"{base_name}.jpg")
-            
-            shutil.copy2(self.audio_file, temp_audio)
-            shutil.copy2(self.image_file, temp_image)
-            
-            # สร้าง looper
-            target_duration_ms = int(self.duration_hours * 60 * 60 * 1000)
-            crossfade_ms = self.crossfade_duration if not self.auto_crossfade else 3000
-            
-            looper = LullaboyLooper(
-                folder_path=temp_folder,
-                crossfade_duration=crossfade_ms,
-                remove_audio=not self.keep_original
-            )
-            
-            # แก้ไข target duration
-            looper.target_duration = target_duration_ms
+            # คัดลอกไฟล์
+            temp_audio, temp_image = self._copy_files_to_temp(temp_folder)
             
             if self.progress_callback:
                 self.progress_callback(40, "กำลังประมวลผลเสียง...")
-                
-            # ประมวลผล
-            looper.process()
+            
+            # สร้างวิดีโอ
+            success = self.video_processor.create_video(
+                image_path=temp_image,
+                audio_path=temp_audio,
+                output_path=self.output_video,
+                duration_seconds=int(self.duration_hours * 3600),
+                aspect_ratio=self.aspect_ratio
+            )
             
             if self.progress_callback:
                 self.progress_callback(80, "กำลังจัดระเบียบไฟล์...")
-                
-            # ย้ายไฟล์ผลลัพธ์
-            temp_output = os.path.join(temp_folder, f"{base_name}.mp4")
-            if os.path.exists(temp_output):
-                shutil.move(temp_output, self.output_video)
                 
             # ลบโฟลเดอร์ชั่วคราว
             shutil.rmtree(temp_folder, ignore_errors=True)
@@ -529,13 +773,28 @@ class CustomImageMusicLooper:
             if self.progress_callback:
                 self.progress_callback(100, "เสร็จสิ้น!")
                 
-            return True
+            return success
             
         except Exception as e:
             print(f"Error in CustomImageMusicLooper: {e}")
             return False
-
-
+    
+    def _create_temp_folder(self):
+        """สร้างโฟลเดอร์ชั่วคราว"""
+        temp_folder = os.path.join(self.output_folder, "temp")
+        os.makedirs(temp_folder, exist_ok=True)
+        return temp_folder
+    
+    def _copy_files_to_temp(self, temp_folder):
+        """คัดลอกไฟล์ไปยังโฟลเดอร์ชั่วคราว"""
+        base_name = os.path.splitext(os.path.basename(self.audio_file))[0]
+        temp_audio = os.path.join(temp_folder, f"{base_name}.mp3")
+        temp_image = os.path.join(temp_folder, f"{base_name}.jpg")
+        
+        shutil.copy2(self.audio_file, temp_audio)
+        shutil.copy2(self.image_file, temp_image)
+        
+        return temp_audio, temp_image
 def main():
     """ฟังก์ชันหลัก"""
     root = tk.Tk()

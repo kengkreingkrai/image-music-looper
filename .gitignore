@@ -2,3 +2,7 @@ build
 dist
 release
 DEPLOY.md
+temp
+*.mp4
+__pycache__
+*.pyc
