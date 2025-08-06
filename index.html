@@ -454,6 +454,13 @@
             color: var(--secondary-color);
         }
 
+        /* Buy Me a Coffee Button */
+        .footer-section a[href*="buymeacoffee"]:hover {
+            background: #FFE55C !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 221, 0, 0.3);
+        }
+
         .footer-bottom {
             text-align: center;
             padding-top: 30px;
@@ -885,6 +892,23 @@
                         <li><a href="mailto:your-email@example.com">อีเมล</a></li>
                         <li><a href="https://github.com/kengkreingkrai">GitHub Profile</a></li>
                     </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>สนับสนุนโปรเจกต์</h3>
+                    <p style="margin-bottom: 15px;">หากชอบโปรเจกต์นี้ สามารถสนับสนุนได้</p>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="background: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 15px;">
+                            <img src="assets/bmc_qr.png" 
+                                 alt="Buy Me a Coffee QR Code" 
+                                 style="width: 120px; height: 120px; border: 3px solid #FFDD00; border-radius: 8px;">
+                        </div>
+                        <br>
+                        <small style="color: rgba(255,255,255,0.7); display: block; margin-bottom: 10px;">สแกน QR Code ด้วยกล้องมือถือ</small>
+                    </div>
+                    <a href="https://buymeacoffee.com/kengkreingkrai" target="_blank" style="display: inline-block; padding: 10px 20px; background: #FFDD00; color: #000; text-decoration: none; border-radius: 5px; font-weight: bold; transition: all 0.3s ease;">
+                        ☕ Buy Me a Coffee
+                    </a>
                 </div>
             </div>
             

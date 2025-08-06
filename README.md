@@ -145,6 +145,19 @@ python app.py
 
 ขอบคุณชุมชน Python และ open source community ที่ทำให้โปรเจกต์นี้เป็นไปได้
 
+## ☕ สนับสนุนโปรเจกต์
+
+หากคุณชอบโปรเจกต์นี้และต้องการสนับสนุนการพัฒนาต่อไป สามารถซื้อกาแฟให้ผมได้ 😊
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/kengkreingkrai)
+
+การสนับสนุนจะช่วยให้:
+
+- 🚀 พัฒนาฟีเจอร์ใหม่ๆ
+- 🐛 แก้ไขข้อผิดพลาด
+- 📚 ปรับปรุงเอกสาร
+- 💡 สร้างโปรเจกต์ใหม่ๆ
+
 ---
 
 <p align="center">
