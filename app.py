@@ -4,8 +4,6 @@ import os
 import threading
 from PIL import Image, ImageTk
 import subprocess
-import time
-from app import LullaboyLooper
 
 class ImageMusicLooperUI:
     def __init__(self, root):
