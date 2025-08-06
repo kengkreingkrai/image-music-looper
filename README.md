@@ -18,10 +18,12 @@
 ## 📥 ดาวน์โหลด
 
 ### เวอร์ชันล่าสุด
-[**ดาวน์โหลด ImageMusicLooper.exe**](https://github.com/yourusername/image-music-looper/releases/latest/download/ImageMusicLooper.exe)
+
+[**ดาวน์โหลด ImageMusicLooper.exe**](https://github.com/kengkreingkrai/image-music-looper/releases/latest/download/ImageMusicLooper.exe)
 
 ### เวอร์ชันก่อนหน้า
-[ดูเวอร์ชันทั้งหมด](https://github.com/yourusername/image-music-looper/releases)
+
+[ดูเวอร์ชันทั้งหมด](https://github.com/kengkreingkrai/image-music-looper/releases)
 
 ## 🔧 ข้อกำหนดระบบ
 
@@ -33,11 +35,13 @@
 ## 🚀 วิธีใช้งาน
 
 ### การติดตั้ง
+
 1. ดาวน์โหลดไฟล์ `ImageMusicLooper.exe`
 2. บันทึกไฟล์ไว้ในโฟลเดอร์ที่ต้องการ
 3. ดับเบิลคลิกที่ไฟล์เพื่อเริ่มใช้งาน
 
 ### การใช้งาน
+
 1. **เลือกไฟล์** - เลือกภาพพื้นหลังและไฟล์เสียง
 2. **ตั้งค่า** - กำหนดความยาววิดีโอและอัตราส่วนภาพ
 3. **ปรับแต่ง** - ตั้งค่า Crossfade (ถ้าต้องการ)
@@ -47,11 +51,13 @@
 ## 🎯 ไฟล์ที่รองรับ
 
 ### ไฟล์ภาพ
+
 - **JPEG** (.jpg, .jpeg)
 - **PNG** (.png)
 - **Bitmap** (.bmp)
 
 ### ไฟล์เสียง
+
 - **MP3** (.mp3)
 - **WAV** (.wav)
 - **M4A** (.m4a)
@@ -60,16 +66,19 @@
 ## 🛠️ การพัฒนา
 
 ### ความต้องการสำหรับการพัฒนา
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### การ Build โปรแกรม
+
 ```bash
 python build.py
 ```
 
 ### โครงสร้างโปรแกรม
+
 ```
 image-music-looper/
 ├── app.py                 # โปรแกรมหลัก
@@ -86,14 +95,15 @@ image-music-looper/
 
 เรายินดีรับการมีส่วนร่วมจากชุมชน! หากคุณต้องการ:
 
-1. **รายงานปัญหา** - [เปิด Issue](https://github.com/yourusername/image-music-looper/issues)
-2. **เสนอฟีเจอร์ใหม่** - [เปิด Feature Request](https://github.com/yourusername/image-music-looper/issues)
+1. **รายงานปัญหา** - [เปิด Issue](https://github.com/kengkreingkrai/image-music-looper/issues)
+2. **เสนอฟีเจอร์ใหม่** - [เปิด Feature Request](https://github.com/kengkreingkrai/image-music-looper/issues)
 3. **ส่ง Code** - Fork โปรเจกต์และส่ง Pull Request
 
 ### การตั้งค่าสำหรับการพัฒนา
+
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/image-music-looper.git
+git clone https://github.com/kengkreingkrai/image-music-looper.git
 cd image-music-looper
 
 # ติดตั้ง dependencies
@@ -109,17 +119,17 @@ python app.py
 
 ## 🔗 ลิงก์ที่เป็นประโยชน์
 
-- 🌐 **เว็บไซต์:** [https://yourusername.github.io/image-music-looper](https://yourusername.github.io/image-music-looper)
-- 📥 **ดาวน์โหลด:** [Releases](https://github.com/yourusername/image-music-looper/releases)
-- 🐛 **รายงานปัญหา:** [Issues](https://github.com/yourusername/image-music-looper/issues)
-- 💡 **เสนอไอเดีย:** [Discussions](https://github.com/yourusername/image-music-looper/discussions)
+- 🌐 **เว็บไซต์:** [https://kengkreingkrai.github.io/image-music-looper](https://kengkreingkrai.github.io/image-music-looper)
+- 📥 **ดาวน์โหลด:** [Releases](https://github.com/kengkreingkrai/image-music-looper/releases)
+- 🐛 **รายงานปัญหา:** [Issues](https://github.com/kengkreingkrai/image-music-looper/issues)
+- 💡 **เสนอไอเดีย:** [Discussions](https://github.com/kengkreingkrai/image-music-looper/discussions)
 
 ## 📊 สถิติ
 
-![GitHub stars](https://img.shields.io/github/stars/yourusername/image-music-looper?style=social)
-![GitHub forks](https://img.shields.io/github/forks/yourusername/image-music-looper?style=social)
-![GitHub issues](https://img.shields.io/github/issues/yourusername/image-music-looper)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/yourusername/image-music-looper)
+![GitHub stars](https://img.shields.io/github/stars/kengkreingkrai/image-music-looper?style=social)
+![GitHub forks](https://img.shields.io/github/forks/kengkreingkrai/image-music-looper?style=social)
+![GitHub issues](https://img.shields.io/github/issues/kengkreingkrai/image-music-looper)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/kengkreingkrai/image-music-looper)
 
 ## 🙏 ขอบคุณ
 
@@ -129,5 +139,5 @@ python app.py
 
 <p align="center">
   สร้างด้วย ❤️ สำหรับชุมชน<br>
-  <a href="https://github.com/yourusername">GitHub Profile</a>
+  <a href="https://github.com/kengkreingkrai">GitHub Profile</a>
 </p>
