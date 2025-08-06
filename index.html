@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Music Looper - สร้างวิดีโอเพลงแบบลูป</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --light-gray: #f8f9fa;
+            --dark-gray: #6c757d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-color);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--secondary-color);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h2 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success-color), #2ecc71);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Screenshot Section */
+        .screenshot-section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .screenshot-container {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .screenshot-placeholder {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--light-gray), #e9ecef);
+            border: 3px dashed var(--dark-gray);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .screenshot-placeholder::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        .screenshot-placeholder i {
+            font-size: 4rem;
+            color: var(--dark-gray);
+            margin-bottom: 20px;
+        }
+
+        .screenshot-placeholder .text {
+            text-align: center;
+            color: var(--dark-gray);
+        }
+
+        .screenshot-placeholder h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+            background: var(--light-gray);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+            margin-bottom: 60px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .feature-card p {
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        /* Installation Section */
+        .installation {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .step {
+            text-align: center;
+            padding: 30px 20px;
+            border-radius: 15px;
+            background: var(--light-gray);
+            position: relative;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 20px;
+        }
+
+        .step h3 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .step p {
+            color: var(--dark-gray);
+        }
+
+        /* Usage Section */
+        .usage {
+            padding: 80px 0;
+            background: var(--light-gray);
+        }
+
+        .usage-steps {
+            display: grid;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .usage-step {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 30px;
+            align-items: center;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .usage-step:nth-child(even) {
+            grid-template-columns: 1fr auto;
+        }
+
+        .usage-step:nth-child(even) .step-content {
+            order: 1;
+        }
+
+        .usage-step:nth-child(even) .step-image {
+            order: 2;
+        }
+
+        .step-image {
+            width: 300px;
+            height: 200px;
+            background: var(--light-gray);
+            border: 2px dashed var(--dark-gray);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-gray);
+        }
+
+        .step-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .step-content p {
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        /* Download Section */
+        .download {
+            padding: 80px 0;
+            background: linear-gradient(135deg, var(--primary-color), #34495e);
+            color: white;
+            text-align: center;
+        }
+
+        .download-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 15px;
+            margin: 40px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .download-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--warning-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--primary-color);
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 20px;
+            color: var(--secondary-color);
+        }
+
+        .footer-section p,
+        .footer-section li {
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--secondary-color);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .nav-links {
+                gap: 20px;
+            }
+
+            .hero h2 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .usage-step {
+                grid-template-columns: 1fr !important;
+            }
+
+            .usage-step:nth-child(even) .step-content,
+            .usage-step:nth-child(even) .step-image {
+                order: unset;
+            }
+
+            .step-image {
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-music"></i>
+                    <h1>Image Music Looper</h1>
+                </div>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#features">คุณสมบัติ</a></li>
+                        <li><a href="#installation">วิธีติดตั้ง</a></li>
+                        <li><a href="#usage">วิธีใช้งาน</a></li>
+                        <li><a href="#download">ดาวน์โหลด</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2>สร้างวิดีโอเพลงแบบลูป</h2>
+            <p>โปรแกรมสำหรับสร้างวิดีโอจากภาพและเพลง พร้อมฟีเจอร์ Loop เพลงแบบไร้รอยต่อ เหมาะสำหรับสร้างวิดีโอเพลงยาวๆ</p>
+            <div class="cta-buttons">
+                <a href="#download" class="btn btn-primary">
+                    <i class="fas fa-download"></i>
+                    ดาวน์โหลดฟรี
+                </a>
+                <a href="#features" class="btn btn-secondary">
+                    <i class="fas fa-info-circle"></i>
+                    เรียนรู้เพิ่มเติม
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshot Section -->
+    <section class="screenshot-section">
+        <div class="container">
+            <div class="screenshot-container">
+                <h2 class="section-title">หน้าตาโปรแกรม</h2>
+                <div class="screenshot-placeholder">
+                    <div class="text">
+                        <i class="fas fa-desktop"></i>
+                        <h3>สกรีนช็อตโปรแกรม</h3>
+                        <p>รูปภาพจะถูกเพิ่มในภายหลัง</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">คุณสมบัติเด่น</h2>
+            <p class="section-subtitle">โปรแกรมที่ครบครันด้วยฟีเจอร์ที่ใช้งานง่าย เหมาะสำหรับทุกคน</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-image"></i>
+                    <h3>รองรับไฟล์ภาพหลากหลาย</h3>
+                    <p>รองรับไฟล์ภาพ JPG, PNG, BMP พร้อมระบบปรับขนาดอัตโนมัติให้เหมาะสมกับอัตราส่วนที่เลือก</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-music"></i>
+                    <h3>ลูปเพลงไร้รอยต่อ</h3>
+                    <p>ระบบ Crossfade อัตโนมัติที่วิเคราะห์เสียงเพื่อหาจุดที่เหมาะสมที่สุดในการต่อลูป</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-cog"></i>
+                    <h3>ตั้งค่าได้ตามต้องการ</h3>
+                    <p>ปรับความยาววิดีโอ อัตราส่วนภาพ และระยะเวลา Crossfade ได้ตามความต้องการ</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-eye"></i>
+                    <h3>ดูตัวอย่างก่อนสร้าง</h3>
+                    <p>ดูตัวอย่างภาพก่อนและหลังการ Crop เพื่อให้มั่นใจว่าผลลัพธ์จะออกมาตามที่ต้องการ</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-desktop"></i>
+                    <h3>ใช้งานง่าย</h3>
+                    <p>หน้าต่างโปรแกรมที่ออกแบบมาให้ใช้งานง่าย เหมาะสำหรับผู้ใช้ทุกระดับ</p>
+                </div>
+                
+                <div class="feature-card">
+                    <i class="fas fa-rocket"></i>
+                    <h3>ประมวลผลเร็ว</h3>
+                    <p>เครื่องมือประมวลผลที่ปรับแต่งมาให้ทำงานได้อย่างมีประสิทธิภาพ</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="installation">
+        <div class="container">
+            <h2 class="section-title">วิธีติดตั้ง</h2>
+            <p class="section-subtitle">ติดตั้งง่าย ใช้งานได้ทันที ไม่ต้องติดตั้งอะไรเพิ่มเติม</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>ดาวน์โหลด</h3>
+                    <p>คลิกปุ่มดาวน์โหลดเพื่อได้ไฟล์ ImageMusicLooper.exe</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>บันทึกไฟล์</h3>
+                    <p>บันทึกไฟล์ .exe ไว้ในโฟลเดอร์ที่ต้องการ</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>เรียกใช้งาน</h3>
+                    <p>ดับเบิลคลิกที่ไฟล์เพื่อเริ่มใช้งานโปรแกรม</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Usage Section -->
+    <section id="usage" class="usage">
+        <div class="container">
+            <h2 class="section-title">วิธีใช้งาน</h2>
+            <p class="section-subtitle">เรียนรู้วิธีใช้งานโปรแกรมในขั้นตอนง่ายๆ</p>
+            
+            <div class="usage-steps">
+                <div class="usage-step">
+                    <div class="step-content">
+                        <h3>1. เลือกไฟล์ภาพและเสียง</h3>
+                        <p>ในแท็บ "เลือกไฟล์" ให้เลือกไฟล์ภาพที่จะใช้เป็นพื้นหลัง และไฟล์เสียงที่ต้องการให้ลูป รองรับไฟล์ภาพ JPG, PNG, BMP และไฟล์เสียง MP3, WAV, M4A, FLAC</p>
+                    </div>
+                    <div class="step-image">
+                        <div class="text">
+                            <i class="fas fa-file-upload"></i>
+                            <p>เลือกไฟล์</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="usage-step">
+                    <div class="step-content">
+                        <h3>2. ตั้งค่าความยาวและอัตราส่วน</h3>
+                        <p>กำหนดความยาววิดีโอที่ต้องการ (0.5-12 ชั่วโมง) และเลือกอัตราส่วนภาพ เช่น 16:9, 4:3, 1:1 หรือ 21:9 ตามความต้องการ</p>
+                    </div>
+                    <div class="step-image">
+                        <div class="text">
+                            <i class="fas fa-sliders-h"></i>
+                            <p>ตั้งค่า</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="usage-step">
+                    <div class="step-content">
+                        <h3>3. ปรับแต่งการตั้งค่าขั้นสูง (ถ้าต้องการ)</h3>
+                        <p>ในแท็บ "ตั้งค่าขั้นสูง" สามารถเลือกให้ระบบหาจุด Crossfade อัตโนมัติ หรือกำหนดระยะเวลา Crossfade เอง และเลือกว่าจะเก็บไฟล์ต้นฉบับไว้หรือไม่</p>
+                    </div>
+                    <div class="step-image">
+                        <div class="text">
+                            <i class="fas fa-cogs"></i>
+                            <p>ตั้งค่าขั้นสูง</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="usage-step">
+                    <div class="step-content">
+                        <h3>4. ดูตัวอย่างและเริ่มสร้าง</h3>
+                        <p>ไปที่แท็บ "ตัวอย่าง" เพื่อดูภาพก่อนและหลังการปรับขนาด จากนั้นคลิก "เริ่มสร้างวิดีโอ" เพื่อเริ่มการประมวลผล</p>
+                    </div>
+                    <div class="step-image">
+                        <div class="text">
+                            <i class="fas fa-play-circle"></i>
+                            <p>เริ่มสร้าง</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="download">
+        <div class="container">
+            <h2 class="section-title" style="color: white;">ดาวน์โหลดฟรี</h2>
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.8);">เวอร์ชันล่าสุดพร้อมฟีเจอร์ครบครัน</p>
+            
+            <div class="download-info">
+                <div class="download-stats">
+                    <div class="stat">
+                        <div class="stat-number">v1.0</div>
+                        <div class="stat-label">เวอร์ชันปัจจุบัน</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">~50MB</div>
+                        <div class="stat-label">ขนาดไฟล์</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">Windows</div>
+                        <div class="stat-label">รองรับระบบ</div>
+                    </div>
+                </div>
+                
+                <a href="https://github.com/yourusername/image-music-looper/releases/latest/download/ImageMusicLooper.exe" class="btn btn-primary" style="font-size: 1.2rem; padding: 20px 40px;">
+                    <i class="fas fa-download"></i>
+                    ดาวน์โหลด ImageMusicLooper.exe
+                </a>
+                
+                <p style="margin-top: 20px; opacity: 0.8;">
+                    <i class="fas fa-shield-alt"></i>
+                    ปลอดภัย 100% ไม่มีไวรัส | ไม่ต้องติดตั้ง | ใช้งานได้ทันที
+                </p>
+            </div>
+            
+            <div style="margin-top: 40px;">
+                <h3 style="margin-bottom: 20px;">ข้อกำหนดระบบ</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: left;">
+                    <div>
+                        <strong>ระบบปฏิบัติการ:</strong> Windows 10 ขึ้นไป
+                    </div>
+                    <div>
+                        <strong>หน่วยความจำ:</strong> RAM อย่างน้อย 4GB
+                    </div>
+                    <div>
+                        <strong>พื้นที่ว่าง:</strong> อย่างน้อย 1GB
+                    </div>
+                    <div>
+                        <strong>อื่นๆ:</strong> ไม่ต้องติดตั้งโปรแกรมเพิ่มเติม
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>เกี่ยวกับโปรแกรม</h3>
+                    <p>Image Music Looper เป็นโปรแกรมฟรีสำหรับสร้างวิดีโอจากภาพและเพลง พร้อมฟีเจอร์ลูปเพลงแบบไร้รอยต่อ</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>ลิงก์ที่เป็นประโยชน์</h3>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/image-music-looper">GitHub Repository</a></li>
+                        <li><a href="https://github.com/yourusername/image-music-looper/issues">รายงานปัญหา</a></li>
+                        <li><a href="https://github.com/yourusername/image-music-looper/releases">รุ่นก่อนหน้า</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>ติดต่อ</h3>
+                    <ul>
+                        <li><a href="mailto:your-email@example.com">อีเมล</a></li>
+                        <li><a href="https://github.com/yourusername">GitHub Profile</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Image Music Looper. สร้างด้วย ❤️ สำหรับชุมชน</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'rgba(255, 255, 255, 0.98)';
+            } else {
+                header.style.background = 'rgba(255, 255, 255, 0.95)';
+            }
+        });
+    </script>
+</body>
+</html>
