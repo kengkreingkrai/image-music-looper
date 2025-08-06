@@ -74,20 +74,52 @@ pip install -r requirements.txt
 ### การ Build โปรแกรม
 
 ```bash
+# วิธี 1: ใช้ build script (แนะนำ)
 python build.py
+
+# วิธี 2: ใช้ batch file (Windows)
+build.bat
+
+# วิธี 3: ใช้ PyInstaller โดยตรง
+pyinstaller --onefile --windowed --name ImageMusicLooper app.py
+```
+
+### การ Deploy เว็บไซต์ไปยัง GitHub Pages
+
+```bash
+# 1. เปิดใช้งาน GitHub Pages
+# ไปที่ Settings > Pages ของ repository
+# เลือก Source: Deploy from a branch
+# เลือก Branch: main / (root)
+
+# 2. เว็บไซต์จะใช้ไฟล์ index.html ใน root directory
+# ไม่ต้องสร้าง branch แยก เพราะ index.html อยู่ใน main แล้ว
+```
+
+### การสร้าง Release และอัปโหลด .exe
+
+```bash
+# 1. Build โปรแกรม
+python build.py
+
+# 2. สร้าง tag และ release
+git tag v1.0
+git push origin v1.0
+
+# 3. ไปที่ GitHub > Releases > Create a new release
+# 4. อัปโหลดไฟล์ ImageMusicLooper.exe และ README.txt จาก release/
 ```
 
 ### โครงสร้างโปรแกรม
 
 ```
 image-music-looper/
-├── app.py                 # โปรแกรมหลัก
-├── build.py              # Script สำหรับ build
-├── requirements.txt      # Dependencies
-├── index.html           # GitHub Pages
-├── .github/
-│   └── workflows/
-│       └── build-and-deploy.yml
+├── app.py               # โปรแกรมหลัก
+├── build.py            # Script สำหรับ build
+├── build.bat           # Batch file สำหรับ Windows
+├── requirements.txt    # Dependencies
+├── index.html         # GitHub Pages website
+├── LICENSE            # MIT License
 └── README.md
 ```
 
@@ -112,6 +144,10 @@ pip install -r requirements.txt
 # รันโปรแกรม
 python app.py
 ```
+
+### การ Deploy และ Release
+
+สำหรับผู้ที่ต้องการ deploy โปรเจกต์นี้ ดูคู่มือใน **[DEPLOY.md](DEPLOY.md)** ที่มีขั้นตอนแบบ manual ทั้งหมด
 
 ## 📝 สิทธิ์การใช้งาน
 

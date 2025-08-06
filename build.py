@@ -14,11 +14,10 @@ def install_requirements():
     """Install required packages for building"""
     print("📦 Installing build requirements...")
     
-    # List of required packages
+    # List of required packages (tkinter is built-in with Python)
     requirements = [
         "pyinstaller",
-        "pillow",
-        "tkinter"  # Usually comes with Python, but just in case
+        "pillow"
     ]
     
     for package in requirements:
@@ -29,6 +28,14 @@ def install_requirements():
         except subprocess.CalledProcessError as e:
             print(f"   ❌ Failed to install {package}: {e}")
             return False
+    
+    # Check if tkinter is available (it should be built-in)
+    try:
+        import tkinter
+        print("   ✅ tkinter is available (built-in)")
+    except ImportError:
+        print("   ❌ tkinter not available. Please install Python with tkinter support.")
+        return False
     
     print("   ✅ All requirements installed successfully!")
     return True
