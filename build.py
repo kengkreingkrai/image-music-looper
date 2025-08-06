@@ -17,7 +17,8 @@ def install_requirements():
     # List of required packages (tkinter is built-in with Python)
     requirements = [
         "pyinstaller",
-        "pillow"
+        "pillow",
+        "moviepy"
     ]
     
     for package in requirements:
@@ -47,8 +48,8 @@ def create_spec_file():
 block_cipher = None
 
 a = Analysis(
-    ['app.py'],
-    pathex=[],
+    ['D:/image-music-looper/app.py'],
+    pathex=['D:/image-music-looper'],
     binaries=[],
     datas=[],
     hiddenimports=[
@@ -56,7 +57,10 @@ a = Analysis(
         'tkinter',
         'tkinter.ttk',
         'tkinter.filedialog',
-        'tkinter.messagebox'
+        'tkinter.messagebox',
+        'moviepy.editor',
+        'moviepy.video.io.ImageSequenceClip',
+        'moviepy.audio.io.AudioFileClip'
     ],
     hookspath=[],
     hooksconfig={},

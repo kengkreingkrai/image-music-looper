@@ -84,32 +84,6 @@ build.bat
 pyinstaller --onefile --windowed --name ImageMusicLooper app.py
 ```
 
-### การ Deploy เว็บไซต์ไปยัง GitHub Pages
-
-```bash
-# 1. เปิดใช้งาน GitHub Pages
-# ไปที่ Settings > Pages ของ repository
-# เลือก Source: Deploy from a branch
-# เลือก Branch: main / (root)
-
-# 2. เว็บไซต์จะใช้ไฟล์ index.html ใน root directory
-# ไม่ต้องสร้าง branch แยก เพราะ index.html อยู่ใน main แล้ว
-```
-
-### การสร้าง Release และอัปโหลด .exe
-
-```bash
-# 1. Build โปรแกรม
-python build.py
-
-# 2. สร้าง tag และ release
-git tag v1.0
-git push origin v1.0
-
-# 3. ไปที่ GitHub > Releases > Create a new release
-# 4. อัปโหลดไฟล์ ImageMusicLooper.exe และ README.txt จาก release/
-```
-
 ### โครงสร้างโปรแกรม
 
 ```

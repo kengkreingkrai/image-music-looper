@@ -3,8 +3,8 @@
 block_cipher = None
 
 a = Analysis(
-    ['app.py'],
-    pathex=[],
+    ['D:/image-music-looper/app.py'],
+    pathex=['D:/image-music-looper'],
     binaries=[],
     datas=[],
     hiddenimports=[
@@ -12,7 +12,10 @@ a = Analysis(
         'tkinter',
         'tkinter.ttk',
         'tkinter.filedialog',
-        'tkinter.messagebox'
+        'tkinter.messagebox',
+        'moviepy.editor',
+        'moviepy.video.io.ImageSequenceClip',
+        'moviepy.audio.io.AudioFileClip'
     ],
     hookspath=[],
     hooksconfig={},
